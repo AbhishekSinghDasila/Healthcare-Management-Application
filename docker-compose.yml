@@ -1,0 +1,184 @@
+version: '3.8'
+
+services:
+
+  # =================== AUTH SERVICE ===================
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - MONGO_URI=mongodb://mongo-auth:27017/authdb
+      - JWT_SECRET=healthcare_super_secret_jwt_key_2024
+    depends_on:
+      - mongo-auth
+    networks:
+      - healthcare-network
+    restart: unless-stopped
+
+  mongo-auth:
+    image: mongo:7
+    container_name: mongo-auth
+    volumes:
+      - mongo-auth-data:/data/db
+    networks:
+      - healthcare-network
+    restart: unless-stopped
+
+  # =================== PATIENT SERVICE ===================
+  patient-service:
+    build: ./patient-service
+    container_name: patient-service
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - MONGO_URI=mongodb://mongo-patient:27017/patientdb
+      - AUTH_SERVICE_URL=http://auth-service:3001
+    depends_on:
+      - mongo-patient
+      - auth-service
+    networks:
+      - healthcare-network
+    restart: unless-stopped
+
+  mongo-patient:
+    image: mongo:7
+    container_name: mongo-patient
+    volumes:
+      - mongo-patient-data:/data/db
+    networks:
+      - healthcare-network
+    restart: unless-stopped
+
+  # =================== APPOINTMENT SERVICE ===================
+  appointment-service:
+    build: ./appointment-service
+    container_name: appointment-service
+    ports:
+      - "3003:3003"
+    environment:
+      - PORT=3003
+      - MONGO_URI=mongodb://mongo-appointment:27017/appointmentdb
+      - AUTH_SERVICE_URL=http://auth-service:3001
+    depends_on:
+      - mongo-appointment
+      - auth-service
+    networks:
+      - healthcare-network
+    restart: unless-stopped
+
+  mongo-appointment:
+    image: mongo:7
+    container_name: mongo-appointment
+    volumes:
+      - mongo-appointment-data:/data/db
+    networks:
+      - healthcare-network
+    restart: unless-stopped
+
+  # =================== BILLING SERVICE ===================
+  billing-service:
+    build: ./billing-service
+    container_name: billing-service
+    ports:
+      - "3004:3004"
+    environment:
+      - PORT=3004
+      - MONGO_URI=mongodb://mongo-billing:27017/billingdb
+      - AUTH_SERVICE_URL=http://auth-service:3001
+    depends_on:
+      - mongo-billing
+      - auth-service
+    networks:
+      - healthcare-network
+    restart: unless-stopped
+
+  mongo-billing:
+    image: mongo:7
+    container_name: mongo-billing
+    volumes:
+      - mongo-billing-data:/data/db
+    networks:
+      - healthcare-network
+    restart: unless-stopped
+
+  # =================== ANALYTICS SERVICE ===================
+  analytics-service:
+    build: ./analytics-service
+    container_name: analytics-service
+    ports:
+      - "3005:3005"
+    environment:
+      - PORT=3005
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - PATIENT_SERVICE_URL=http://patient-service:3002
+      - APPOINTMENT_SERVICE_URL=http://appointment-service:3003
+      - BILLING_SERVICE_URL=http://billing-service:3004
+      - DOCTOR_SERVICE_URL=http://doctor-service:3006
+    depends_on:
+      - auth-service
+      - patient-service
+      - appointment-service
+      - billing-service
+    networks:
+      - healthcare-network
+    restart: unless-stopped
+
+  # =================== DOCTOR SERVICE ===================
+  doctor-service:
+    build: ./doctor-service
+    container_name: doctor-service
+    ports:
+      - "3006:3006"
+    environment:
+      - PORT=3006
+      - MONGO_URI=mongodb://mongo-doctor:27017/doctordb
+      - AUTH_SERVICE_URL=http://auth-service:3001
+    depends_on:
+      - mongo-doctor
+      - auth-service
+    networks:
+      - healthcare-network
+    restart: unless-stopped
+
+  mongo-doctor:
+    image: mongo:7
+    container_name: mongo-doctor
+    volumes:
+      - mongo-doctor-data:/data/db
+    networks:
+      - healthcare-network
+    restart: unless-stopped
+
+  # =================== FRONTEND SERVICE ===================
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - auth-service
+      - patient-service
+      - appointment-service
+      - billing-service
+      - analytics-service
+      - doctor-service
+    networks:
+      - healthcare-network
+    restart: unless-stopped
+
+# =================== NETWORKS ===================
+networks:
+  healthcare-network:
+    driver: bridge
+
+# =================== VOLUMES ===================
+volumes:
+  mongo-auth-data:
+  mongo-patient-data:
+  mongo-appointment-data:
+  mongo-billing-data:
+  mongo-doctor-data:
