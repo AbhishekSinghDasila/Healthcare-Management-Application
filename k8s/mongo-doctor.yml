@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-doctor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo-doctor
+  template:
+    metadata:
+      labels:
+        app: mongo-doctor
+    spec:
+      containers:
+        - name: mongo-doctor
+          image: mongo:7
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: mongo-doctor-storage
+              mountPath: /data/db
+      volumes:
+        - name: mongo-doctor-storage
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-doctor
+spec:
+  selector:
+    app: mongo-doctor
+  ports:
+    - port: 27017
+      targetPort: 27017
