@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
@@ -18,20 +20,23 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 3009;
 
-// Mock Ethereal Email Setup
-let transporter;
-nodemailer.createTestAccount().then(account => {
+// Real SMTP transporter, built synchronously at startup from env vars.
+let transporter = null;
+
+if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+  console.warn('[notification-service] SMTP_HOST, SMTP_USER, or SMTP_PASS is not configured. Email sending is disabled; the service will still boot.');
+} else {
   transporter = nodemailer.createTransport({
-    host: account.smtp.host,
-    port: account.smtp.port,
-    secure: account.smtp.secure,
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT),
+    secure: process.env.SMTP_SECURE === 'true',
     auth: {
-      user: account.user,
-      pass: account.pass
-    }
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
   });
-  console.log('Ethereal Email transporter created');
-}).catch(console.error);
+  console.log('SMTP transporter created');
+}
 
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
@@ -55,13 +60,15 @@ app.post('/notify', async (req, res) => {
         subject: subject,
         text: text,
       });
-      console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+      console.log('Email sent:', info.messageId);
+    } else if (to) {
+      console.log('[notification-service] SMTP not configured, skipping email send');
     }
-    
+
     if (eventType && payload) {
       io.emit(eventType, payload);
     }
-    
+
     res.status(200).json({ message: 'Notification sent successfully' });
   } catch (error) {
     console.error(error);
