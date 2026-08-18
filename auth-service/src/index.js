@@ -5,6 +5,16 @@ const connectDB = require('./db');
 const authRoutes = require('./authRoutes');
 
 dotenv.config();
+
+// Fail fast if required env vars are missing
+const REQUIRED_ENV_VARS = ['MONGO_URI', 'JWT_SECRET'];
+for (const key of REQUIRED_ENV_VARS) {
+  if (!process.env[key]) {
+    console.error(`FATAL: missing required env var ${key}`);
+    process.exit(1);
+  }
+}
+
 connectDB();
 
 const app = express();

@@ -5,6 +5,17 @@ const connectDB = require('./db');
 const doctorRoutes = require('./doctorRoutes');
 
 dotenv.config();
+
+// Fail fast if required env vars are missing
+process.env.AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://auth-service:3001';
+const REQUIRED_ENV_VARS = ['MONGO_URI', 'AUTH_SERVICE_URL'];
+for (const key of REQUIRED_ENV_VARS) {
+  if (!process.env[key]) {
+    console.error(`FATAL: missing required env var ${key}`);
+    process.exit(1);
+  }
+}
+
 connectDB();
 
 const app = express();

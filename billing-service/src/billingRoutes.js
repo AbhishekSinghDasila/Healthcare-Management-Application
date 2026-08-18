@@ -59,38 +59,6 @@ router.get('/', verifyToken, async (req, res) => {
   }
 });
 
-// UPDATE payment
-router.put('/:id', verifyToken, async (req, res) => {
-  try {
-    const bill = await Bill.findById(req.params.id);
-    if (!bill) return res.status(404).json({ message: 'Bill not found' });
-
-    const { paidAmount, paymentMethod } = req.body;
-    bill.paidAmount = paidAmount;
-    bill.paymentMethod = paymentMethod || bill.paymentMethod;
-
-    if (paidAmount >= bill.totalAmount) bill.status = 'paid';
-    else if (paidAmount > 0) bill.status = 'partial';
-    else bill.status = 'pending';
-
-    await bill.save();
-    res.json({ message: '✅ Payment updated', bill });
-  } catch (err) {
-    res.status(500).json({ message: 'Payment update failed', error: err.message });
-  }
-});
-
-// GET single bill
-router.get('/:id', verifyToken, async (req, res) => {
-  try {
-    const bill = await Bill.findById(req.params.id);
-    if (!bill) return res.status(404).json({ message: 'Bill not found' });
-    res.json(bill);
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch bill', error: err.message });
-  }
-});
-
 // COINS LOGIC
 router.post('/coins/add', verifyToken, async (req, res) => {
   try {
@@ -160,6 +128,43 @@ router.post('/razorpay/verify', verifyToken, async (req, res) => {
     res.json({ message: '✅ Payment verified and bill updated', bill });
   } catch (err) {
     res.status(500).json({ message: 'Failed to verify payment' });
+  }
+});
+
+// UPDATE payment
+router.put('/:id', verifyToken, async (req, res) => {
+  try {
+    const bill = await Bill.findById(req.params.id);
+    if (!bill) return res.status(404).json({ message: 'Bill not found' });
+
+    const { paidAmount, paymentMethod } = req.body;
+
+    if (typeof paidAmount !== 'number' || !Number.isFinite(paidAmount) || paidAmount < 0) {
+      return res.status(400).json({ message: 'paidAmount must be a finite, non-negative number' });
+    }
+
+    bill.paidAmount = paidAmount;
+    bill.paymentMethod = paymentMethod || bill.paymentMethod;
+
+    if (paidAmount >= bill.totalAmount) bill.status = 'paid';
+    else if (paidAmount > 0) bill.status = 'partial';
+    else bill.status = 'pending';
+
+    await bill.save();
+    res.json({ message: '✅ Payment updated', bill });
+  } catch (err) {
+    res.status(500).json({ message: 'Payment update failed', error: err.message });
+  }
+});
+
+// GET single bill
+router.get('/:id', verifyToken, async (req, res) => {
+  try {
+    const bill = await Bill.findById(req.params.id);
+    if (!bill) return res.status(404).json({ message: 'Bill not found' });
+    res.json(bill);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch bill', error: err.message });
   }
 });
 

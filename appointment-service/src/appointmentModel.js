@@ -13,6 +13,10 @@ const appointmentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  doctorId: {
+    type: String,
+    required: true
+  },
   department: {
     type: String,
     required: true,

@@ -64,9 +64,11 @@ services:
       - MONGO_URI=mongodb://mongo-appointment:27017/appointmentdb
       - AUTH_SERVICE_URL=http://auth-service:3001
       - NOTIFICATION_SERVICE_URL=http://notification-service:3009
+      - DOCTOR_SERVICE_URL=http://doctor-service:3006
     depends_on:
       - mongo-appointment
       - auth-service
+      - doctor-service
     networks:
       - healthcare-network
     restart: unless-stopped
@@ -161,9 +163,14 @@ services:
       - PORT=3007
       - MONGO_URI=mongodb://mongo-admin:27017/admindb
       - AUTH_SERVICE_URL=http://auth-service:3001
+      - DOCTOR_SERVICE_URL=http://doctor-service:3006
+      - ANALYTICS_SERVICE_URL=http://analytics-service:3005
+      - NOTIFICATION_SERVICE_URL=http://notification-service:3009
     depends_on:
       - mongo-admin
       - auth-service
+      - doctor-service
+      - analytics-service
     networks:
       - healthcare-network
     restart: unless-stopped

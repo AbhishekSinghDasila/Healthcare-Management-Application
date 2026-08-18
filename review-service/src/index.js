@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -8,9 +10,19 @@ app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 3008;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/reviewdb';
+const MONGO_URI = process.env.MONGO_URI;
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://auth-service:3001';
 const BILLING_SERVICE_URL = process.env.BILLING_SERVICE_URL || 'http://billing-service:3004';
+const DOCTOR_SERVICE_URL = process.env.DOCTOR_SERVICE_URL || 'http://doctor-service:3006';
+
+// Fail fast if required env vars are missing
+const REQUIRED_ENV_VARS = { MONGO_URI, AUTH_SERVICE_URL, BILLING_SERVICE_URL, DOCTOR_SERVICE_URL };
+for (const [key, value] of Object.entries(REQUIRED_ENV_VARS)) {
+  if (!value) {
+    console.error(`FATAL: missing required env var ${key}`);
+    process.exit(1);
+  }
+}
 
 mongoose.connect(MONGO_URI)
   .then(() => console.log('Review Service connected to MongoDB'))
@@ -72,6 +84,19 @@ app.post('/api/reviews', verifyToken, async (req, res) => {
       });
     } catch (e) {
       console.error('Failed to reward coins', e.message);
+    }
+
+    // Recalculate and push the doctor's average rating - log and continue on failure
+    try {
+      const agg = await Review.aggregate([
+        { $match: { doctorId } },
+        { $group: { _id: '$doctorId', avg: { $avg: '$rating' } } }
+      ]);
+      await axios.put(`${DOCTOR_SERVICE_URL}/api/doctors/${doctorId}/rating`, {
+        rating: agg[0]?.avg || rating
+      });
+    } catch (e) {
+      console.error('Failed to update doctor rating', e.message);
     }
 
     res.status(201).json({ message: '✅ Review submitted and coins rewarded!', review });

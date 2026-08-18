@@ -131,6 +131,25 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// UPDATE doctor rating (internal service-to-service call from review-service)
+router.put('/:id/rating', async (req, res) => {
+  try {
+    const { rating } = req.body;
+    if (typeof rating !== 'number' || !Number.isFinite(rating)) {
+      return res.status(400).json({ message: 'rating must be a finite number' });
+    }
+    const doctor = await Doctor.findByIdAndUpdate(
+      req.params.id,
+      { rating },
+      { new: true }
+    );
+    if (!doctor) return res.status(404).json({ message: 'Doctor not found' });
+    res.json({ message: '✅ Rating updated', doctor });
+  } catch (err) {
+    res.status(500).json({ message: 'Rating update failed', error: err.message });
+  }
+});
+
 // UPDATE my doctor profile
 router.put('/me/update', verifyToken, async (req, res) => {
   try {

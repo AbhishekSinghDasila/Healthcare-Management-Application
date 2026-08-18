@@ -73,6 +73,17 @@ router.post('/google-login', async (req, res) => {
   }
 });
 
+// GET user by id (internal service-to-service lookup - only ever exposes email/name)
+router.get('/users/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('email name -_id');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
+  } catch (err) {
+    res.status(404).json({ message: 'User not found' });
+  }
+});
+
 // VERIFY TOKEN (used by other services)
 router.get('/verify', async (req, res) => {
   try {
