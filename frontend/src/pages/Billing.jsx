@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import Sidebar from "../components/Sidebar";
-import { CreditCard } from "lucide-react";
+import { CreditCard, Coins } from "lucide-react";
 
 export default function Billing() {
   const { token, user } = useAuth();
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [wallet, setWallet] = useState(null);
 
   const fetchBills = async () => {
     try {
@@ -19,7 +20,18 @@ export default function Billing() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchBills(); }, []);
+  const fetchWallet = async () => {
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_BILLING_URL}/api/billing/wallet`,
+        { headers: { authorization: `Bearer ${token}` } });
+      setWallet(res.data);
+    } catch (err) { console.error(err); }
+  };
+
+  useEffect(() => {
+    fetchBills();
+    if (user?.role === "patient") fetchWallet();
+  }, []);
 
   const handlePayNow = async (bill) => {
     try {
@@ -42,6 +54,23 @@ export default function Billing() {
       <div style={{ marginLeft: "240px", flex: 1, background: "#0d1117", minHeight: "100vh", padding: "32px" }}>
         <h1 style={{ color: "#fff", fontSize: "28px", fontWeight: "700", marginBottom: "8px" }}>Billing</h1>
         <p style={{ color: "#a0aec0", marginBottom: "32px" }}>Your billing and payment history</p>
+
+        {user?.role === "patient" && wallet && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: "16px",
+            background: "linear-gradient(135deg, rgba(243,156,18,0.15), rgba(233,69,96,0.1))",
+            border: "1px solid rgba(243,156,18,0.3)", borderRadius: "16px",
+            padding: "20px 24px", marginBottom: "24px", width: "fit-content"
+          }}>
+            <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "rgba(243,156,18,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Coins size={24} color="#f39c12" />
+            </div>
+            <div>
+              <div style={{ color: "#a0aec0", fontSize: "12px" }}>Wallet Balance</div>
+              <div style={{ color: "#f39c12", fontSize: "22px", fontWeight: "700" }}>{wallet.coins} coins</div>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <p style={{ color: "#a0aec0" }}>Loading...</p>

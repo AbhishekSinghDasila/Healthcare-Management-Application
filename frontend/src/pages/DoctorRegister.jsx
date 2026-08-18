@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import Sidebar from "../components/Sidebar";
@@ -15,9 +15,36 @@ export default function DoctorRegister() {
   });
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [isEdit, setIsEdit] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const days = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
   const specs = ["Cardiology","Neurology","Orthopedics","General","Pediatrics","Dermatology","Gynecology","Psychiatry","Ophthalmology","ENT","Dentistry","Radiology"];
+
+  useEffect(() => {
+    axios.get(`${import.meta.env.VITE_DOCTOR_URL}/api/doctors/me`,
+      { headers: { authorization: `Bearer ${token}` } })
+      .then(res => {
+        const doc = res.data;
+        setForm({
+          name: doc.name || "", email: doc.email || "", phone: doc.phone || "",
+          specialization: doc.specialization || "General",
+          experience: doc.experience ?? "", fees: doc.fees ?? "", about: doc.about || "",
+          qualifications: (doc.qualifications || []).join(", "),
+          availableDays: doc.availableDays || [],
+          availableTimeSlots: (doc.availableTimeSlots || []).join(", "),
+          clinic: {
+            name: doc.clinic?.name || "", address: doc.clinic?.address || "",
+            city: doc.clinic?.city || "", state: doc.clinic?.state || "",
+            pincode: doc.clinic?.pincode || "",
+            lat: doc.clinic?.lat ?? "", lng: doc.clinic?.lng ?? ""
+          }
+        });
+        setIsEdit(true);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
 
   const toggleDay = (day) => {
     setForm(f => ({
@@ -42,9 +69,16 @@ export default function DoctorRegister() {
           lng: Number(form.clinic.lng)
         }
       };
-      await axios.post(`${import.meta.env.VITE_DOCTOR_URL}/api/doctors/register`, payload,
-        { headers: { authorization: `Bearer ${token}` } });
-      setSuccess("✅ Profile submitted! Waiting for admin approval.");
+      if (isEdit) {
+        await axios.put(`${import.meta.env.VITE_DOCTOR_URL}/api/doctors/me/update`, payload,
+          { headers: { authorization: `Bearer ${token}` } });
+        setSuccess("✅ Profile updated successfully.");
+      } else {
+        await axios.post(`${import.meta.env.VITE_DOCTOR_URL}/api/doctors/register`, payload,
+          { headers: { authorization: `Bearer ${token}` } });
+        setSuccess("✅ Profile submitted! Waiting for admin approval.");
+        setIsEdit(true);
+      }
       setError("");
     } catch (err) {
       setError(err.response?.data?.message || "Submission failed");
@@ -61,8 +95,9 @@ export default function DoctorRegister() {
     <div style={{ display: "flex" }}>
       <Sidebar />
       <div style={{ marginLeft: "240px", flex: 1, background: "#0d1117", minHeight: "100vh", padding: "32px" }}>
-        <h1 style={{ color: "#fff", fontSize: "28px", fontWeight: "700", marginBottom: "8px" }}>Doctor Profile Registration</h1>
-        <p style={{ color: "#a0aec0", marginBottom: "32px" }}>Submit your profile for admin approval</p>
+        <h1 style={{ color: "#fff", fontSize: "28px", fontWeight: "700", marginBottom: "8px" }}>{isEdit ? "My Profile" : "Doctor Profile Registration"}</h1>
+        <p style={{ color: "#a0aec0", marginBottom: "32px" }}>{isEdit ? "Update your profile details" : "Submit your profile for admin approval"}</p>
+        {loading && <p style={{ color: "#a0aec0" }}>Loading...</p>}
 
         {success && <div style={{ background: "rgba(72,199,142,0.2)", border: "1px solid #48c78e", borderRadius: "10px", padding: "12px", marginBottom: "20px", color: "#48c78e" }}>{success}</div>}
         {error && <div style={{ background: "rgba(233,69,96,0.2)", border: "1px solid #e94560", borderRadius: "10px", padding: "12px", marginBottom: "20px", color: "#e94560" }}>{error}</div>}
@@ -143,7 +178,7 @@ export default function DoctorRegister() {
 
         <button onClick={handleSubmit}
           style={{ padding: "14px 32px", background: "linear-gradient(135deg, #e94560, #0f3460)", border: "none", borderRadius: "12px", color: "#fff", fontSize: "16px", fontWeight: "600", cursor: "pointer" }}>
-          Submit for Approval
+          {isEdit ? "Save Changes" : "Submit for Approval"}
         </button>
       </div>
     </div>

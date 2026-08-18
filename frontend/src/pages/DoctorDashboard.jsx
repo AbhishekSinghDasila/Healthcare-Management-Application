@@ -9,7 +9,7 @@ export default function DoctorDashboard() {
 
   const cards = [
     { title: "All Appointments", desc: "View all patient appointments", icon: <Calendar size={32} />, color: "#3498db", path: "/appointments" },
-    { title: "Patient Records", desc: "View all patient records", icon: <Users size={32} />, color: "#48c78e", path: "/reports" },
+    { title: "Patient Records", desc: "View all patient records", icon: <Users size={32} />, color: "#48c78e", path: "/appointments" },
     { title: "Reports", desc: "Generate medical reports", icon: <FileText size={32} />, color: "#f39c12", path: "/reports" },
   ];
 

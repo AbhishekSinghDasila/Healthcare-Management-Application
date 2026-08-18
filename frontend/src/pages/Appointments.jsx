@@ -7,10 +7,11 @@ import { Calendar, Plus, X } from "lucide-react";
 export default function Appointments() {
   const { token, user } = useAuth();
   const [appointments, setAppointments] = useState([]);
+  const [doctors, setDoctors] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
-    patientName: "", doctorName: "", department: "General",
+    patientName: "", doctorId: "", doctorName: "", department: "General",
     appointmentDate: "", timeSlot: "", reason: ""
   });
 
@@ -26,12 +27,24 @@ export default function Appointments() {
 
   useEffect(() => { fetchAppointments(); }, []);
 
+  useEffect(() => {
+    if (user?.role !== "patient") return;
+    axios.get(`${import.meta.env.VITE_DOCTOR_URL}/api/doctors/approved`)
+      .then(res => setDoctors(res.data))
+      .catch(() => setDoctors([]));
+  }, [user]);
+
+  const handleDoctorSelect = (id) => {
+    const doc = doctors.find(d => d._id === id);
+    setForm(f => ({ ...f, doctorId: id, doctorName: doc?.name || "" }));
+  };
+
   const handleBook = async () => {
     try {
       await axios.post(`${import.meta.env.VITE_APPOINTMENT_URL}/api/appointments`, form,
         { headers: { authorization: `Bearer ${token}` } });
       setShowForm(false);
-      setForm({ patientName: "", doctorName: "", department: "General", appointmentDate: "", timeSlot: "", reason: "" });
+      setForm({ patientName: "", doctorId: "", doctorName: "", department: "General", appointmentDate: "", timeSlot: "", reason: "" });
       fetchAppointments();
     } catch (err) { alert(err.response?.data?.message || "Booking failed"); }
   };
@@ -70,9 +83,25 @@ export default function Appointments() {
               <X size={20} color="#a0aec0" onClick={() => setShowForm(false)} style={{ cursor: "pointer" }} />
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              <div>
+                <label style={{ color: "#a0aec0", fontSize: "13px", display: "block", marginBottom: "6px" }}>Patient Name</label>
+                <input type="text" placeholder="Patient Name"
+                  value={form.patientName} onChange={e => setForm({ ...form, patientName: e.target.value })}
+                  style={{ width: "100%", padding: "10px 14px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "8px", color: "#fff", outline: "none", boxSizing: "border-box" }} />
+              </div>
+              <div>
+                <label style={{ color: "#a0aec0", fontSize: "13px", display: "block", marginBottom: "6px" }}>Doctor</label>
+                <select value={form.doctorId} onChange={e => handleDoctorSelect(e.target.value)}
+                  style={{ width: "100%", padding: "10px 14px", background: "#1a1a2e", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "8px", color: "#fff", outline: "none" }}>
+                  <option value="" style={{ background: "#1a1a2e" }}>Select a doctor...</option>
+                  {doctors.map(doc => (
+                    <option key={doc._id} value={doc._id} style={{ background: "#1a1a2e" }}>
+                      Dr. {doc.name} — {doc.specialization}
+                    </option>
+                  ))}
+                </select>
+              </div>
               {[
-                { label: "Patient Name", key: "patientName", type: "text" },
-                { label: "Doctor Name", key: "doctorName", type: "text" },
                 { label: "Date", key: "appointmentDate", type: "date" },
                 { label: "Time Slot", key: "timeSlot", type: "text", placeholder: "e.g. 10:00 AM" },
               ].map(({ label, key, type, placeholder }) => (
@@ -118,6 +147,9 @@ export default function Appointments() {
                 <div>
                   <h3 style={{ color: "#fff", margin: "0 0 6px 0", fontSize: "16px" }}>Dr. {apt.doctorName}</h3>
                   <p style={{ color: "#a0aec0", margin: "0 0 4px 0", fontSize: "13px" }}>{apt.department} • {apt.timeSlot}</p>
+                  {user?.role === "patient" && (
+                    <p style={{ color: "#6b7280", margin: "0 0 4px 0", fontSize: "11px" }}>Appointment ID (for reviews): {apt._id}</p>
+                  )}
                   <p style={{ color: "#a0aec0", margin: 0, fontSize: "13px" }}>{new Date(apt.appointmentDate).toLocaleDateString()} • {apt.reason}</p>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>

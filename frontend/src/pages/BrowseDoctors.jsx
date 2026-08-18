@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
@@ -15,12 +16,12 @@ L.Icon.Default.mergeOptions({
 });
 
 export default function BrowseDoctors() {
+  const navigate = useNavigate();
   const [doctors, setDoctors] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [search, setSearch] = useState("");
   const [specFilter, setSpecFilter] = useState("All");
   const [cityFilter, setCityFilter] = useState("");
-  const [selected, setSelected] = useState(null);
   const [view, setView] = useState("list");
   const [loading, setLoading] = useState(true);
 
@@ -108,7 +109,7 @@ export default function BrowseDoctors() {
                 ) : filtered.map(doc => (
                   <div key={doc._id}
                     style={{ background: "rgba(255,255,255,0.05)", borderRadius: "16px", padding: "24px", border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", transition: "transform 0.2s" }}
-                    onClick={() => setSelected(selected?._id === doc._id ? null : doc)}
+                    onClick={() => navigate(`/doctors/${doc._id}`)}
                     onMouseEnter={e => e.currentTarget.style.transform = "translateY(-4px)"}
                     onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
@@ -137,25 +138,6 @@ export default function BrowseDoctors() {
                         <Clock size={14} color="#3498db" /> {doc.availableDays?.slice(0,3).join(", ")}{doc.availableDays?.length > 3 ? "..." : ""}
                       </div>
                     </div>
-
-                    {selected?._id === doc._id && (
-                      <div style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-                        <p style={{ color: "#a0aec0", fontSize: "13px", marginBottom: "8px" }}>{doc.about}</p>
-                        <p style={{ color: "#a0aec0", fontSize: "12px" }}>🎓 {doc.qualifications?.join(", ")}</p>
-                        <p style={{ color: "#a0aec0", fontSize: "12px" }}>🏥 {doc.clinic?.name}, {doc.clinic?.address}</p>
-                        <p style={{ color: "#a0aec0", fontSize: "12px" }}>⏰ Slots: {doc.availableTimeSlots?.join(", ")}</p>
-                        {doc.clinic?.lat && doc.clinic?.lng && (
-                          <div style={{ marginTop: "12px", borderRadius: "8px", overflow: "hidden", height: "180px" }}>
-                            <MapContainer center={[doc.clinic.lat, doc.clinic.lng]} zoom={14} style={{ height: "100%", width: "100%" }} zoomControl={false}>
-                              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                              <Marker position={[doc.clinic.lat, doc.clinic.lng]}>
-                                <Popup>Dr. {doc.name}'s Clinic</Popup>
-                              </Marker>
-                            </MapContainer>
-                          </div>
-                        )}
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>

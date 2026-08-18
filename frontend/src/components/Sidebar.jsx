@@ -2,8 +2,9 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Calendar, FileText,
-  CreditCard, BarChart2, LogOut, Heart, Users, UserCheck, Stethoscope
+  CreditCard, BarChart2, LogOut, Heart, Users, UserCheck, Stethoscope, Sparkles, User
 } from "lucide-react";
+import NotificationBell from "./NotificationBell";
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
@@ -15,6 +16,8 @@ export default function Sidebar() {
     { icon: <Users size={20} />, label: "Find Doctors", path: "/browse-doctors" },
     { icon: <Calendar size={20} />, label: "Appointments", path: "/appointments" },
     { icon: <CreditCard size={20} />, label: "Billing", path: "/billing" },
+    { icon: <User size={20} />, label: "My Profile", path: "/profile" },
+    { icon: <Sparkles size={20} />, label: "AI Assistant", path: "/assistant" },
   ];
 
   const doctorLinks = [
@@ -22,6 +25,7 @@ export default function Sidebar() {
     { icon: <Stethoscope size={20} />, label: "My Profile", path: "/doctor-register" },
     { icon: <Calendar size={20} />, label: "Appointments", path: "/appointments" },
     { icon: <FileText size={20} />, label: "Reports", path: "/reports" },
+    { icon: <Sparkles size={20} />, label: "AI Assistant", path: "/assistant" },
   ];
 
   const adminLinks = [
@@ -30,6 +34,7 @@ export default function Sidebar() {
     { icon: <Calendar size={20} />, label: "Appointments", path: "/appointments" },
     { icon: <CreditCard size={20} />, label: "Billing", path: "/billing" },
     { icon: <BarChart2 size={20} />, label: "Reports", path: "/reports" },
+    { icon: <Sparkles size={20} />, label: "AI Assistant", path: "/assistant" },
   ];
 
   const links = user?.role === "admin" ? adminLinks : user?.role === "doctor" ? doctorLinks : patientLinks;
@@ -42,12 +47,15 @@ export default function Sidebar() {
       position: "fixed", left: 0, top: 0, zIndex: 100
     }}>
       <div style={{ padding: "20px 24px", borderBottom: "1px solid rgba(255,255,255,0.1)", marginBottom: "20px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <Heart size={28} color="#e94560" fill="#e94560" />
-          <div>
-            <div style={{ color: "#fff", fontWeight: "bold", fontSize: "16px" }}>HealthCare</div>
-            <div style={{ color: "#a0aec0", fontSize: "11px" }}>Management System</div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <Heart size={28} color="#e94560" fill="#e94560" />
+            <div>
+              <div style={{ color: "#fff", fontWeight: "bold", fontSize: "16px" }}>HealthCare</div>
+              <div style={{ color: "#a0aec0", fontSize: "11px" }}>Management System</div>
+            </div>
           </div>
+          <NotificationBell />
         </div>
       </div>
 

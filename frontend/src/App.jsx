@@ -11,6 +11,9 @@ import Reports from "./pages/Reports";
 import DoctorRegister from "./pages/DoctorRegister";
 import BrowseDoctors from "./pages/BrowseDoctors";
 import AdminDoctors from "./pages/AdminDoctors";
+import DoctorProfile from "./pages/DoctorProfile";
+import PatientProfile from "./pages/PatientProfile";
+import AIAssistant from "./pages/AIAssistant";
 
 const ProtectedRoute = ({ children, roles }) => {
   const { user, token } = useAuth();
@@ -34,6 +37,10 @@ function AppRoutes() {
       <Route path="/doctor-register" element={<ProtectedRoute roles={["doctor"]}><DoctorRegister /></ProtectedRoute>} />
       <Route path="/browse-doctors" element={<ProtectedRoute roles={["patient"]}><BrowseDoctors /></ProtectedRoute>} />
       <Route path="/admin-doctors" element={<ProtectedRoute roles={["admin"]}><AdminDoctors /></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute roles={["patient"]}><PatientProfile /></ProtectedRoute>} />
+      <Route path="/doctors/:id" element={<ProtectedRoute><DoctorProfile /></ProtectedRoute>} />
+      <Route path="/assistant" element={<ProtectedRoute><AIAssistant /></ProtectedRoute>} />
+      <Route path="*" element={<Navigate to="/login" />} />
     </Routes>
   );
 }
