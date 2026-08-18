@@ -1,0 +1,206 @@
+# Render Blueprint - deploys all 10 backend services from one sync.
+#
+# First-time setup:
+#   1. Push this repo to GitHub (done).
+#   2. In the Render dashboard: New + -> Blueprint -> select this repo/branch.
+#   3. Render will prompt for every `sync: false` value below (secrets) -
+#      have your MongoDB Atlas connection strings, JWT secret, Gemini key,
+#      and SMTP credentials ready.
+#   4. After the first deploy, each service gets a URL like
+#      https://hms-auth-service.onrender.com (or a Render-assigned
+#      variant if that name is taken). Note the real URLs, then update
+#      the *_SERVICE_URL values below to match and re-sync the Blueprint
+#      (or edit them directly in the Render dashboard - either works).
+#
+# Free-tier note: these services spin down after 15 minutes of
+# inactivity and take ~30-60s to wake on the next request. That's
+# expected and fine for a demo/portfolio deployment.
+
+services:
+  - type: web
+    name: hms-auth-service
+    env: node
+    plan: free
+    rootDir: auth-service
+    buildCommand: npm install
+    startCommand: node src/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 3001
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+
+  - type: web
+    name: hms-patient-service
+    env: node
+    plan: free
+    rootDir: patient-service
+    buildCommand: npm install
+    startCommand: node src/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 3002
+      - key: MONGO_URI
+        sync: false
+      - key: AUTH_SERVICE_URL
+        value: https://hms-auth-service.onrender.com
+
+  - type: web
+    name: hms-appointment-service
+    env: node
+    plan: free
+    rootDir: appointment-service
+    buildCommand: npm install
+    startCommand: node src/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 3003
+      - key: MONGO_URI
+        sync: false
+      - key: AUTH_SERVICE_URL
+        value: https://hms-auth-service.onrender.com
+      - key: DOCTOR_SERVICE_URL
+        value: https://hms-doctor-service.onrender.com
+      - key: NOTIFICATION_SERVICE_URL
+        value: https://hms-notification-service.onrender.com
+
+  - type: web
+    name: hms-billing-service
+    env: node
+    plan: free
+    rootDir: billing-service
+    buildCommand: npm install
+    startCommand: node src/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 3004
+      - key: MONGO_URI
+        sync: false
+      - key: AUTH_SERVICE_URL
+        value: https://hms-auth-service.onrender.com
+
+  - type: web
+    name: hms-analytics-service
+    env: node
+    plan: free
+    rootDir: analytics-service
+    buildCommand: npm install
+    startCommand: node src/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 3005
+      - key: AUTH_SERVICE_URL
+        value: https://hms-auth-service.onrender.com
+      - key: PATIENT_SERVICE_URL
+        value: https://hms-patient-service.onrender.com
+      - key: APPOINTMENT_SERVICE_URL
+        value: https://hms-appointment-service.onrender.com
+      - key: BILLING_SERVICE_URL
+        value: https://hms-billing-service.onrender.com
+      - key: DOCTOR_SERVICE_URL
+        value: https://hms-doctor-service.onrender.com
+
+  - type: web
+    name: hms-doctor-service
+    env: node
+    plan: free
+    rootDir: doctor-service
+    buildCommand: npm install
+    startCommand: node src/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 3006
+      - key: MONGO_URI
+        sync: false
+      - key: AUTH_SERVICE_URL
+        value: https://hms-auth-service.onrender.com
+
+  - type: web
+    name: hms-admin-service
+    env: node
+    plan: free
+    rootDir: admin-service
+    buildCommand: npm install
+    startCommand: node src/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 3007
+      - key: MONGO_URI
+        sync: false
+      - key: AUTH_SERVICE_URL
+        value: https://hms-auth-service.onrender.com
+      - key: DOCTOR_SERVICE_URL
+        value: https://hms-doctor-service.onrender.com
+      - key: ANALYTICS_SERVICE_URL
+        value: https://hms-analytics-service.onrender.com
+      - key: NOTIFICATION_SERVICE_URL
+        value: https://hms-notification-service.onrender.com
+
+  - type: web
+    name: hms-review-service
+    env: node
+    plan: free
+    rootDir: review-service
+    buildCommand: npm install
+    startCommand: node src/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 3008
+      - key: MONGO_URI
+        sync: false
+      - key: AUTH_SERVICE_URL
+        value: https://hms-auth-service.onrender.com
+      - key: BILLING_SERVICE_URL
+        value: https://hms-billing-service.onrender.com
+      - key: DOCTOR_SERVICE_URL
+        value: https://hms-doctor-service.onrender.com
+
+  - type: web
+    name: hms-notification-service
+    env: node
+    plan: free
+    rootDir: notification-service
+    buildCommand: npm install
+    startCommand: node src/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 3009
+      - key: AUTH_SERVICE_URL
+        value: https://hms-auth-service.onrender.com
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_SECURE
+        value: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+
+  - type: web
+    name: hms-ai-service
+    env: node
+    plan: free
+    rootDir: ai-service
+    buildCommand: npm install
+    startCommand: node src/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 3010
+      - key: AUTH_SERVICE_URL
+        value: https://hms-auth-service.onrender.com
+      - key: GEMINI_API_KEY
+        sync: false

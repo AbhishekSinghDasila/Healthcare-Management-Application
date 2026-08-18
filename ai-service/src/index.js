@@ -15,8 +15,11 @@ if (!GEMINI_API_KEY) {
   console.warn('[ai-service] GEMINI_API_KEY is not configured. Falling back to canned responses for every request.');
 }
 
+// flash-lite trades some quality for much lower latency, which matters more for an
+// interactive chat UI than for a one-shot answer (the full "flash" model's default
+// "thinking" mode took ~60s per reply in testing vs ~5s for flash-lite).
 const GEMINI_API_URL = GEMINI_API_KEY
-  ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`
+  ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`
   : null;
 
 app.get('/health', (req, res) => {
@@ -61,7 +64,7 @@ app.post('/ask', async (req, res) => {
           parts: [{ text: fullPrompt }],
         },
       ],
-    });
+    }, { timeout: 20000 });
 
     const reply = geminiResponse.data.candidates[0].content.parts[0].text;
     res.status(200).json({ reply });
