@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: admin-service
+  template:
+    metadata:
+      labels:
+        app: admin-service
+    spec:
+      containers:
+        - name: admin-service
+          image: admin-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3007
+          env:
+            - name: PORT
+              value: "3007"
+            - name: MONGO_URI
+              value: "mongodb://mongo-admin:27017/admindb"
+            - name: DOCTOR_SERVICE_URL
+              value: "http://doctor-service:3006"
+            - name: AUTH_SERVICE_URL
+              value: "http://auth-service:3001"
+            - name: NOTIFICATION_SERVICE_URL
+              value: "http://notification-service:3009"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3007
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: admin-service
+spec:
+  selector:
+    app: admin-service
+  type: NodePort
+  ports:
+    - port: 3007
+      targetPort: 3007
+      nodePort: 30007
+
