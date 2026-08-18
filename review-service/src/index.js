@@ -101,7 +101,8 @@ app.post('/api/reviews', verifyToken, async (req, res) => {
 
     res.status(201).json({ message: '✅ Review submitted and coins rewarded!', review });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to submit review' });
+    console.error('Failed to submit review:', error.message);
+    res.status(500).json({ message: 'Failed to submit review', error: error.message });
   }
 });
 

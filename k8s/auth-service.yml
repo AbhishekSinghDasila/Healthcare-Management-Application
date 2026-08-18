@@ -24,7 +24,10 @@ spec:
             - name: MONGO_URI
               value: "mongodb://mongo-auth:27017/authdb"
             - name: JWT_SECRET
-              value: "healthcare_super_secret_jwt_key_2024"
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_SECRET
           readinessProbe:
             httpGet:
               path: /health

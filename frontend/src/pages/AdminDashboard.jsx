@@ -16,7 +16,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get(`${import.meta.env.VITE_ANALYTICS_URL}/api/analytics/stats`,
+    axios.get(`${import.meta.env.VITE_ADMIN_URL}/api/admin/stats`,
       { headers: { authorization: `Bearer ${token}` } })
       .then(res => { setStats(res.data); setLoading(false); })
       .catch(() => setLoading(false));

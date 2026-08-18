@@ -13,19 +13,32 @@ export default function AdminDoctors() {
 
   const fetchDoctors = async () => {
     try {
-      const endpoint = filter === "all" ? "/api/doctors/all" : `/api/doctors/${filter}`;
-      const res = await axios.get(`${import.meta.env.VITE_DOCTOR_URL}${endpoint}`,
-        { headers: { authorization: `Bearer ${token}` } });
-      setDoctors(res.data);
+      if (filter === "pending") {
+        // Pending approvals go through admin-service's proxy (keeps admin actions auditable).
+        const res = await axios.get(`${import.meta.env.VITE_ADMIN_URL}/api/admin/doctors/pending`,
+          { headers: { authorization: `Bearer ${token}` } });
+        setDoctors(res.data);
+      } else if (filter === "rejected") {
+        // doctor-service has no dedicated /rejected listing route; filter client-side from /all.
+        const res = await axios.get(`${import.meta.env.VITE_DOCTOR_URL}/api/doctors/all`,
+          { headers: { authorization: `Bearer ${token}` } });
+        setDoctors(res.data.filter(d => d.status === "rejected"));
+      } else {
+        const endpoint = filter === "all" ? "/api/doctors/all" : "/api/doctors/approved";
+        const res = await axios.get(`${import.meta.env.VITE_DOCTOR_URL}${endpoint}`,
+          { headers: { authorization: `Bearer ${token}` } });
+        setDoctors(res.data);
+      }
     } catch (err) { console.error(err); }
     setLoading(false);
   };
 
   useEffect(() => { fetchDoctors(); }, [filter]);
 
+  // Approve/reject route through admin-service so they're proxied, notified, and audit-logged.
   const handleApprove = async (id) => {
     try {
-      await axios.put(`${import.meta.env.VITE_DOCTOR_URL}/api/doctors/approve/${id}`, {},
+      await axios.put(`${import.meta.env.VITE_ADMIN_URL}/api/admin/doctors/approve/${id}`, {},
         { headers: { authorization: `Bearer ${token}` } });
       fetchDoctors();
     } catch (err) { alert("Approval failed"); }
@@ -33,7 +46,7 @@ export default function AdminDoctors() {
 
   const handleReject = async (id) => {
     try {
-      await axios.put(`${import.meta.env.VITE_DOCTOR_URL}/api/doctors/reject/${id}`,
+      await axios.put(`${import.meta.env.VITE_ADMIN_URL}/api/admin/doctors/reject/${id}`,
         { reason: rejectReason[id] || "Does not meet requirements" },
         { headers: { authorization: `Bearer ${token}` } });
       fetchDoctors();

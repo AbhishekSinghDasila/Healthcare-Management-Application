@@ -12,11 +12,12 @@ const PORT = process.env.PORT || 3010;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 if (!GEMINI_API_KEY) {
-  console.error('FATAL ERROR: GEMINI_API_KEY is not defined in environment variables.');
-  process.exit(1);
+  console.warn('[ai-service] GEMINI_API_KEY is not configured. Falling back to canned responses for every request.');
 }
 
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+const GEMINI_API_URL = GEMINI_API_KEY
+  ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`
+  : null;
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'AI Service is running' });
@@ -50,6 +51,8 @@ app.post('/ask', async (req, res) => {
   const { prompt, role } = req.body;
 
   try {
+    if (!GEMINI_API_URL) throw new Error('GEMINI_API_KEY not configured');
+
     const fullPrompt = buildPrompt(prompt, role);
 
     const geminiResponse = await axios.post(GEMINI_API_URL, {

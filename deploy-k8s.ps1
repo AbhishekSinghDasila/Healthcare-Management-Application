@@ -58,6 +58,16 @@ foreach ($svc in $services) {
     }
 }
 
+# ---- STEP 3.5: Create JWT secret ----
+Write-Host ""
+Write-Host "[3.5/5] Creating JWT secret..." -ForegroundColor Yellow
+if (-not $env:JWT_SECRET) {
+    Write-Host "  JWT_SECRET env var not set - generating a random one for this deployment." -ForegroundColor Yellow
+    $env:JWT_SECRET = -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 48 | ForEach-Object { [char]$_ })
+}
+kubectl create secret generic jwt-secret --from-literal=JWT_SECRET=$env:JWT_SECRET --dry-run=client -o yaml | kubectl apply -f -
+Write-Host "  jwt-secret created/updated." -ForegroundColor Green
+
 # ---- STEP 4: Apply all Kubernetes manifests ----
 Write-Host ""
 Write-Host "[4/5] Deploying all services to Kubernetes..." -ForegroundColor Yellow
